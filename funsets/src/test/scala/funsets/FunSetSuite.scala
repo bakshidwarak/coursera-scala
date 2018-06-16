@@ -107,6 +107,13 @@ class FunSetSuite extends FunSuite {
       assert(contains(s, 1), "Union 1")
       assert(contains(s, 2), "Union 2")
       assert(!contains(s, 3), "Union 3")
+
+      val y=map(s,ele=>ele*2)
+
+
+      assert(contains(y, 2), "map 1 to 2")
+      assert(contains(y, 4), "map 2 to 4")
+      assert(!contains(y, 6), "map 3-6")
     }
   }
 
