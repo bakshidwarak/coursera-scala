@@ -77,6 +77,11 @@ class FunSetSuite extends FunSuite {
     val s1 = singletonSet(1)
     val s2 = singletonSet(2)
     val s3 = singletonSet(3)
+    val s4 = singletonSet(4)
+    val s5 = singletonSet(5)
+    val s7 = singletonSet(7)
+    val s1000 = singletonSet(1000)
+
   }
 
   /**
@@ -118,6 +123,16 @@ class FunSetSuite extends FunSuite {
       assert(forall(s, ele=>ele<3))
 
       assert(exists(y, ele=>ele%4==0))
+
+
+
+
+
+      val setToMap=union(union(union(s1,s3),union(s4,s5)),union(s7,s1000))
+
+      val mapped=map(setToMap,n=> n-1)
+      printSet(setToMap)
+      printSet(mapped)
     }
   }
 
