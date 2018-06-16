@@ -114,6 +114,10 @@ class FunSetSuite extends FunSuite {
       assert(contains(y, 2), "map 1 to 2")
       assert(contains(y, 4), "map 2 to 4")
       assert(!contains(y, 6), "map 3-6")
+
+      assert(forall(s, ele=>ele<3))
+
+      assert(exists(y, ele=>ele%4==0))
     }
   }
 
