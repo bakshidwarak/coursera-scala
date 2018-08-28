@@ -1,5 +1,9 @@
 package forcomp
 
+import forcomp.Anagrams.Occurrences
+
+import scala.collection.SortedMap
+
 
 object Anagrams {
 
@@ -34,10 +38,12 @@ object Anagrams {
    *
    *  Note: you must use `groupBy` to implement this method!
    */
-  def wordOccurrences(w: Word): Occurrences = ???
+  def wordOccurrences(w: Word): Occurrences = w.toLowerCase.groupBy(c=>c).map((ele=>(ele._1, ele._2.length))).toList.sortBy(_._1)
+
+  def merge(ele: List[(Char, Int)]): (Char, Int) = ele.reduce((e1,e2)=>(e1._1,e1._2+e2._2))
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = ???
+  def sentenceOccurrences(s: Sentence): Occurrences = s.map(e=>wordOccurrences(e)).flatten.groupBy(_._1).map(ele=>merge(ele._2)).toList.sorted
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
@@ -54,10 +60,10 @@ object Anagrams {
    *    List(('a', 1), ('e', 1), ('t', 1)) -> Seq("ate", "eat", "tea")
    *
    */
-  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = ???
+  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = dictionary.groupBy(wordOccurrences(_))
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = ???
+  def wordAnagrams(word: Word): List[Word] = dictionaryByOccurrences.getOrElse(wordOccurrences(word),List.empty)
 
   /** Returns the list of all subsets of the occurrence list.
    *  This includes the occurrence itself, i.e. `List(('k', 1), ('o', 1))`
@@ -81,7 +87,20 @@ object Anagrams {
    *  Note that the order of the occurrence list subsets does not matter -- the subsets
    *  in the example above could have been displayed in some other order.
    */
-  def combinations(occurrences: Occurrences): List[Occurrences] = ???
+  def combinations(occurrences: Occurrences): List[Occurrences] = {
+    def combinationsHelper(currentOccurances: Occurrences,result:List[Occurrences],subResult:Occurrences):List[Occurrences]= {
+      currentOccurances match {
+        case Nil => subResult :: result
+        case head :: tail => {
+          val partialResult :List[Occurrences]  = (for (i <- 1 to head._2) yield combinationsHelper(tail, result, (head._1, i) :: subResult)).toList.flatten
+          partialResult ::: combinationsHelper(tail, result, subResult)
+        }
+      }
+    }
+    for(occ<-combinationsHelper(occurrences.sortBy(_._1),List.empty,List.empty))
+      yield occ.sorted
+
+  }
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
    *
@@ -93,8 +112,19 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
-
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = {
+    val xAsMap:Map[Char,Int] =x.toMap.withDefaultValue(0)
+    def change(currentY:Occurrences,currentMap : Map[Char,Int]): Map[Char,Int] = {
+      currentY match {
+        case Nil => currentMap
+        case ele :: tail => {
+          val cnt=currentMap.getOrElse(ele._1,0)
+          change(tail,currentMap.updated(ele._1,cnt-ele._2))
+        }
+      }
+    }
+    change(y,xAsMap).toList.filter(e=>e._2>0).sortBy(a=>a._1)
+  }
   /** Returns a list of all anagram sentences of the given sentence.
    *
    *  An anagram of a sentence is formed by taking the occurrences of all the characters of
@@ -135,5 +165,18 @@ object Anagrams {
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+
+    def sentenceHelper(occ: Occurrences) : List[Sentence] = {
+     if(occ.isEmpty) List(List())
+      else
+       for {
+         combo<- combinations(occ)
+         currentAnagram <- dictionaryByOccurrences.getOrElse(combo,List())
+         subsequentAnagrams <- sentenceHelper(subtract(occ,combo))
+       } yield currentAnagram :: subsequentAnagrams
+    }
+
+    sentenceHelper(sentenceOccurrences(sentence))
+  }
 }
